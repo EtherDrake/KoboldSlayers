@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 386e1eb29cc771e46a4804f550eec75e
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - Animator: {instanceID: 0}
+  - Portrait: {instanceID: 0}
+  - Ability1Icon: {instanceID: 0}
+  - Ability2Icon: {instanceID: 0}
+  - Ability3Icon: {instanceID: 0}
+  - Ability4Icon: {instanceID: 0}
+  - AudioSource: {instanceID: 0}
+  - ShieldShatter: {fileID: 8300000, guid: 88e689aec8f15cf4dae746a24b9da2ef, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
