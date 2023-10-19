@@ -204,7 +204,10 @@ public class TurnBasedController : MonoBehaviour
                             _activatedAbilityProperties = null;
 
                             var teamA = GameObject.FindGameObjectsWithTag("Team_A").Select(x =>  x.GetComponent<BaseCharacterController>()).Where(x => x.IsAlive).ToList();
-                            var missingCharacters = teamA.Where(x => !_characters.Contains(x));
+                            var teamB = GameObject.FindGameObjectsWithTag("Team_B").Select(x =>  x.GetComponent<BaseCharacterController>()).Where(x => x.IsAlive).ToList();
+                            var missingCharacters = teamA.Where(x => !_characters.Contains(x)).ToList();
+                            missingCharacters.AddRange(teamB.Where(x => !_characters.Contains(x)));
+                            
                             foreach(var missingCharacter in missingCharacters)
                             {
                                 missingCharacter.GetPosition(Tilemap);
@@ -335,7 +338,10 @@ public class TurnBasedController : MonoBehaviour
         
 
         var teamA = GameObject.FindGameObjectsWithTag("Team_A").Select(x =>  x.GetComponent<BaseCharacterController>()).Where(x => x.IsAlive).ToList();
-        var missingCharacters = teamA.Where(x => !_characters.Contains(x));
+        var teamB = GameObject.FindGameObjectsWithTag("Team_B").Select(x =>  x.GetComponent<BaseCharacterController>()).Where(x => x.IsAlive).ToList();
+        var missingCharacters = teamA.Where(x => !_characters.Contains(x)).ToList();
+        missingCharacters.AddRange(teamB.Where(x => !_characters.Contains(x)));
+
         foreach(var missingCharacter in missingCharacters)
         {
             missingCharacter.GetPosition(Tilemap);
@@ -385,49 +391,27 @@ public class TurnBasedController : MonoBehaviour
                 var numberOfEnemies = UnityEngine.Random.Range(1, 4);
                 for(int i = 0; i < numberOfEnemies; i++)
                 {
-                    var randomVal = UnityEngine.Random.Range(1, 10);
-                    var isVelociraptor = phaseNumber > 1 && randomVal > 6;
                     BaseCharacterController newEnemy;
-                    if(isVelociraptor)
-                    {                        
-                        var character = _characters[UnityEngine.Random.Range(0, _characters.Count())];                    
-                        var tile = Tilemap.WorldToCell(character.transform.position);
 
-                        var newX = UnityEngine.Random.Range(tile.x - 5, tile.x + 5);
-                        var newY = UnityEngine.Random.Range(tile.y - 5, tile.y + 5);
+                    var character = _characters[UnityEngine.Random.Range(0, _characters.Count())];                    
+                    var tile = Tilemap.WorldToCell(character.transform.position);
 
-                        while(_characters.Any(x => (Tilemap.WorldToCell(x.transform.position).x == newX && Tilemap.WorldToCell(x.transform.position).y == newY)) || !Walkable.HasTile(new Vector3Int(newX, newY, 0)))
-                        {
-                            newX = UnityEngine.Random.Range(tile.x - 5, tile.x + 5);
-                            newY = UnityEngine.Random.Range(tile.y - 5, tile.y + 5);
-                        }
+                    var newX = UnityEngine.Random.Range(tile.x - 5, tile.x + 5);
+                    var newY = UnityEngine.Random.Range(tile.y - 5, tile.y + 5);
 
-                        newEnemy = Instantiate(VelociraptorPrefab, FindTargetPositionFromTile(new Vector3Int(newX, newY, 0), 2), Quaternion.identity).GetComponent<BaseCharacterController>();
-
-                        newEnemy.GetPosition(Tilemap);
-                    }
-                    else
+                    while(_characters.Any(x => (Tilemap.WorldToCell(x.transform.position).x == newX && Tilemap.WorldToCell(x.transform.position).y == newY)) || !Walkable.HasTile(new Vector3Int(newX, newY, 0)))
                     {
-                        var character = _characters[UnityEngine.Random.Range(0, _characters.Count())];                    
-                        var tile = Tilemap.WorldToCell(character.transform.position);
-
-                        var newX = UnityEngine.Random.Range(tile.x - 5, tile.x + 5);
-                        var newY = UnityEngine.Random.Range(tile.y - 5, tile.y + 5);
-
-                        while(_characters.Any(x => (Tilemap.WorldToCell(x.transform.position).x == newX && Tilemap.WorldToCell(x.transform.position).y == newY)) || !Walkable.HasTile(new Vector3Int(newX, newY, 0)))
-                        {
-                            newX = UnityEngine.Random.Range(tile.x - 5, tile.x + 5);
-                            newY = UnityEngine.Random.Range(tile.y - 5, tile.y + 5);
-                        }
-
-                        newEnemy = Instantiate(KoboldPrefab, FindTargetPositionFromTile(new Vector3Int(newX, newY, 0), 1), Quaternion.identity).GetComponent<BaseCharacterController>();
-
-                        newEnemy.GetPosition(Tilemap);
+                        newX = UnityEngine.Random.Range(tile.x - 5, tile.x + 5);
+                        newY = UnityEngine.Random.Range(tile.y - 5, tile.y + 5);
                     }
+
+                    newEnemy = Instantiate(KoboldPrefab, FindTargetPositionFromTile(new Vector3Int(newX, newY, 0), 1), Quaternion.identity).GetComponent<BaseCharacterController>();
+
+                    newEnemy.GetPosition(Tilemap);
+                    
                     _characters.Add(newEnemy);
                 }                
             }
-
 
             if(ScoreboardController.Score > (1000 * phaseNumber) + (phaseNumber * 250) && !isBossPhase)
             {

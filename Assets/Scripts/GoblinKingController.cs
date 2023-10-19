@@ -10,12 +10,15 @@ using System.Threading.Tasks;
 public class GoblinKingController : EnemyController
 {
     public AudioClip AttackSound;
+    public GameObject Bomb;
 
     // Start is called before the first frame update
     protected override void Start()
     {      
         Animator = GetComponent<Animator>();
         AudioSource = GetComponent<AudioSource>();
+        
+        Bomb = (GameObject)Resources.Load("Bomb");
         
         base.Start();
     }
@@ -28,7 +31,15 @@ public class GoblinKingController : EnemyController
     
     public override IEnumerator AutoAttack(Tilemap tilemap, Vector3Int targetTile, Vector3 targetMovePosition, string targetTag) 
     {
-        return Slash(tilemap, targetTile, targetMovePosition, targetTag);
+        var targetEnemy = GameObject.FindGameObjectsWithTag(targetTag).Where(x => x.GetComponent<BaseCharacterController>().Position.Contains(targetTile)).FirstOrDefault(x => x.GetComponent<BaseCharacterController>().IsAlive);
+        if(targetEnemy != null)
+        {
+            return Slash(tilemap, targetTile, targetMovePosition, targetTag);
+        }
+        else
+        {
+            return PlantBomb(tilemap, targetTile, targetMovePosition);
+        }
     }
 
     public override void InitAbilites()
@@ -78,11 +89,21 @@ public class GoblinKingController : EnemyController
         yield break;
     }
 
+    private IEnumerator PlantBomb(Tilemap tilemap, Vector3Int targetTile, Vector3 targetMovePosition)
+    {
+        var targetPosition = new Vector3(tilemap.CellToWorld(targetTile).x + 0.5f, tilemap.CellToWorld(targetTile).y + 0.75f, 0f);
+        if ((targetPosition.x < targetMovePosition.x && FacingRight) || (targetPosition.x > targetMovePosition.x && !FacingRight))
+        {
+            Flip();
+        }
+        var bomb = Instantiate(Bomb, targetPosition, Quaternion.identity);
+        
+        Animator.SetTrigger("Plant");
+        yield break;
+    }
+
     public override async Task<AiDecision> TakeTurn(Tilemap tilemap, List<Vector3Int> availablePositions, List<BaseCharacterController> enemies, Astar astar, Vector3Int[,] gridValues, int[,] walkableValues)
     {
-        Stopwatch stopWatch = new Stopwatch();
-        stopWatch.Start();
-
         var allyPositions = GameObject.FindGameObjectsWithTag(tag).Where(e => e.GetComponent<BaseCharacterController>().IsAlive).Select(e => tilemap.WorldToCell(e.transform.position)).ToList();
         var enemyPositions = enemies.Select(e => tilemap.WorldToCell(e.transform.position)).ToList();
         var currentPosition =  tilemap.WorldToCell(transform.position);
@@ -145,9 +166,21 @@ public class GoblinKingController : EnemyController
             }
 
             var priorityItem = priorityItems.OrderByDescending(x => x.PriorityValue).First();
-
-            stopWatch.Stop();
-            TimeSpan ts = stopWatch.Elapsed;
+            if(!priorityItem.IsInRange)
+            {
+                var tileToPlant = availablePositions.FirstOrDefault(t => Mathf.Abs(priorityItem.PositionToAttack.x - t.x) <= 1 && Mathf.Abs(priorityItem.PositionToAttack.y - t.y) <= 1);
+                if(tileToPlant != null)
+                {
+                    return new AiDecision
+                    {
+                        IsInRange = true,
+                        Enemy = priorityItem.Enemy,
+                        PositionToAttack = priorityItem.PositionToAttack,
+                        EnemyPosition = tileToPlant,
+                        Route = priorityItem.Route
+                    };
+                }                
+            }
 
             return new AiDecision
             {

@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 
 public class BombController : EnemyController
 {
-    private int _timer = 2;
+    public int _timer = 2;    
+    public AudioClip ExplosionSound;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -36,12 +38,21 @@ public class BombController : EnemyController
     public override void TakeDamage(int damage)
     {
         base.TakeDamage(damage);
-        Morale -= 10;
+    }
+
+    public override void GetHit(BaseCharacterController attacker, int damage)
+    {
+        base.GetHit(attacker, damage);        
+        if(!IsAlive)
+        {               
+            Destroy(gameObject);
+        }
     }
 
     public override async Task<AiDecision> TakeTurn(Tilemap tilemap, List<Vector3Int> availablePositions, List<BaseCharacterController> enemies, Astar astar, Vector3Int[,] gridValues, int[,] walkableValues)
     {
         _timer--;
+        Debug.Log($"Reducing timer. Currently at {_timer}");
         var currentPosition =  tilemap.WorldToCell(transform.position);
 
         if(_timer == 0)
@@ -68,10 +79,10 @@ public class BombController : EnemyController
                 enemy.enemy.GetHit(this, damage);
             }
 
-
-            Animator.SetTrigger("Explode");
-            System.Threading.Thread.Sleep(500);       
-            Destroy(gameObject);
+            
+            AudioSource.PlayOneShot(ExplosionSound);
+            Animator.SetTrigger("Explode");      
+            Destroy(gameObject, 1.15f);
         }
 
         return new AiDecision 
